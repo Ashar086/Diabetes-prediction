@@ -9,10 +9,53 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
-import pickle
 
-pickle_in = open('Diabetes.pkl', 'rb')
-classifier = pickle.load(pickle_in)
+# Load the Pima Indians Diabetes dataset
+@st.cache_data
+def load_data():
+    # URL of the Pima Indians Diabetes dataset
+    url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv"
+    # Column names for the dataset
+    column_names = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age', 'Outcome']
+    # Load the dataset
+    try:
+        data = pd.read_csv(url, names=column_names)
+        return data
+    except Exception as e:
+        st.error(f"Error loading dataset: {e}")
+        # Fallback to a sample dataset if the URL is not accessible
+        return pd.DataFrame({
+            'Pregnancies': [6, 1, 8, 1, 0, 5, 3, 10],
+            'Glucose': [148, 85, 183, 89, 137, 116, 78, 115],
+            'BloodPressure': [72, 66, 64, 66, 40, 74, 50, 0],
+            'SkinThickness': [35, 29, 0, 23, 35, 0, 32, 0],
+            'Insulin': [0, 0, 0, 94, 168, 0, 88, 0],
+            'BMI': [33.6, 26.6, 23.3, 28.1, 43.1, 25.6, 31, 35.3],
+            'DiabetesPedigreeFunction': [0.627, 0.351, 0.672, 0.167, 2.288, 0.201, 0.248, 0.134],
+            'Age': [50, 31, 32, 21, 33, 30, 26, 29],
+            'Outcome': [1, 0, 1, 0, 1, 0, 1, 0]
+        })
+
+# Train the model
+@st.cache_resource
+def train_model(data):
+    # Split the data into features and target
+    X = data.drop('Outcome', axis=1)
+    y = data['Outcome']
+    
+    # Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Scale the features
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+    
+    # Train the model
+    model = LogisticRegression(max_iter=1000)
+    model.fit(X_train, y_train)
+    
+    return model, scaler
 
 def predict():
     st.sidebar.header('Diabetes Prediction')
@@ -55,8 +98,18 @@ def predict():
 
 
     if submit:
-        prediction = classifier.predict([[pregnancy, glucose, bp, skin, insulin, bmi, dpf, age]])
-        if prediction == 0:
+        # Load the data and train the model
+        data = load_data()
+        model, scaler = train_model(data)
+        
+        # Scale the input features
+        input_data = [[pregnancy, glucose, bp, skin, insulin, bmi, dpf, age]]
+        scaled_input = scaler.transform(input_data)
+        
+        # Make prediction
+        prediction = model.predict(scaled_input)
+        
+        if prediction[0] == 0:
             st.write('Congratulation!',name,'You are not diabetic')
         else:
             st.write(name,", we are really sorry to say but it seems like you are Diabetic. But don't lose hope, we have suggestions for you:")
