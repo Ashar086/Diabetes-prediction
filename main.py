@@ -122,7 +122,7 @@ def main():
     read_me = st.markdown("""
     The application is built using Streamlit  
     to demonstrate Diabetes Prediction. It performs prediction on multiple parameters
-    [here](https://github.com/Priyanshu88/Diabetes-Prediction-Streamlit-App#signal_strength-dataset).""")
+    [here](https://github.com/Ashar086/Diabetes-prediction#signal_strength-dataset).""")
     st.sidebar.title("Select Activity")
     choice = st.sidebar.selectbox(
         "MODE", ("About", "Predict Diabetes"))
